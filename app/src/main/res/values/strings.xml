@@ -17,5 +17,6 @@
     <string name="about">About</string>
     <string name="no_device">no device</string>
     <string name="ok">OK</string>
-    <string name="about_message">Author: zsashka21\nDescription: Remote buttons for control media players\nVersion: 24.04</string>
+    <string name="about_message">Author: mcrn21\nDescription: Remote buttons for control media players\nVersion: 24.04\nRepository: <a href="https://github.com/mcrn21/RemoteButtons">github</a></string>
 </resources>
+

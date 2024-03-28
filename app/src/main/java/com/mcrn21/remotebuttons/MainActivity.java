@@ -22,6 +22,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.text.method.LinkMovementMethod;
 
 import com.google.android.material.appbar.MaterialToolbar;
 
@@ -64,6 +65,10 @@ public class MainActivity extends AppCompatActivity {
                 if (id == R.id.about_item) {
                     AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this);
                     View view = getLayoutInflater().inflate(R.layout.dialog_about, null);
+
+                    TextView aboutTextTextView = (TextView) view.findViewById(R.id.about_text_text_view);
+                    aboutTextTextView.setMovementMethod(LinkMovementMethod.getInstance());
+
                     dialogBuilder.setView(view);
                     dialogBuilder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                         @Override

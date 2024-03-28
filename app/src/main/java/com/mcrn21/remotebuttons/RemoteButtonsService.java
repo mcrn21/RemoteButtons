@@ -32,7 +32,6 @@ import java.util.HashMap;
 public class RemoteButtonsService  extends Service implements SerialInputOutputManager.Listener {
     private boolean mIsRunning = false;
     private enum UsbPermission { Unknown, Requested, Granted, Denied }
-    private final HashMap<String, Method> mCommands = new HashMap<>();
     private BroadcastReceiver mBroadcastReceiver;
     private UsbPermission mUsbPermission = UsbPermission.Unknown;
     private SerialInputOutputManager mUsbIoManager = null;
@@ -40,19 +39,7 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
     private String mUsbSerialBuffer = "";
     private int mDeviceId = -1;
 
-    public RemoteButtonsService() {
-        try {
-            mCommands.put(Common.LEFT_COMMAND, RemoteButtonsService.class.getMethod("leftCommand"));
-            mCommands.put(Common.RIGHT_COMMAND, RemoteButtonsService.class.getMethod("rightCommand"));
-            mCommands.put(Common.ENTER_COMMAND, RemoteButtonsService.class.getMethod("enterCommand"));
-            mCommands.put(Common.LEFT_UP_COMMAND, RemoteButtonsService.class.getMethod("leftUpCommand"));
-            mCommands.put(Common.LEFT_DOWN_COMMAND, RemoteButtonsService.class.getMethod("leftDownCommand"));
-            mCommands.put(Common.RIGHT_UP_COMMAND, RemoteButtonsService.class.getMethod("rightUpCommand"));
-            mCommands.put(Common.RIGHT_DOWN_COMMAND, RemoteButtonsService.class.getMethod("rightDownCommand"));
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    public RemoteButtonsService() {}
 
     @Override
     public void onCreate() {
@@ -103,8 +90,8 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
                 sendRemoteButtonsCommand(command);
 
                 try {
-                    mCommands.get(command).invoke(this);
-                } catch (IllegalAccessException | InvocationTargetException e) {
+                    Commands.class.getMethod(command, RemoteButtonsService.class).invoke(null, this);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -247,53 +234,6 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
         mUsbSerialBuffer = "";
         mUsbPermission = UsbPermission.Unknown;
         sendSerialConnectionUpdated(false);
-    }
-
-    public void leftCommand() {
-        AudioManager audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        audio.adjustStreamVolume(AudioManager.STREAM_MUSIC,
-                AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI);
-    }
-
-    public void rightCommand() {
-        AudioManager audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        audio.adjustStreamVolume(AudioManager.STREAM_MUSIC,
-                AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI);
-    }
-
-    public void enterCommand() {
-        AudioManager audio = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-        if (audio.isMusicActive()) {
-            KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE);
-            audio.dispatchMediaKeyEvent(event);
-        } else {
-            KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY);
-            audio.dispatchMediaKeyEvent(event);
-        }
-    }
-
-    public void leftUpCommand() {
-        AudioManager audio = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-        KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PREVIOUS);
-        audio.dispatchMediaKeyEvent(event);
-    }
-
-    public void leftDownCommand() {
-        AudioManager audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if (audio.isStreamMute(AudioManager.STREAM_MUSIC))
-            audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0);
-        else
-            audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0);
-    }
-
-    public void rightUpCommand() {
-        AudioManager audio = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-        KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_NEXT);
-        audio.dispatchMediaKeyEvent(event);
-    }
-
-    public void rightDownCommand() {
-
     }
 
     private void sendSerialConnectionUpdated(boolean state) {
