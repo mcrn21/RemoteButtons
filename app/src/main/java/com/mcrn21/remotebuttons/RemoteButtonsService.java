@@ -60,10 +60,8 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
         createNotificationChannel();
         initBroadcastReceiver();
 
-        SharedPreferences sharedPref = RemoteButtonsService.this.getSharedPreferences("remote_buttons_settings", Context.MODE_PRIVATE);
-        mDeviceId = sharedPref.getInt("deviceId", -1);
+        mDeviceId = Settings.readDeviceId(this);
         connectToSerialUsbDevice();
-        sendAppliedServiceDeviceId();
     }
 
     @Override
@@ -153,8 +151,7 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
         broadcastReceiverFilter.addAction(Common.INTENT_ACTION_GRANT_USB);
         broadcastReceiverFilter.addAction(Common.INTENT_ACTION_USB_ATTACHED);
         broadcastReceiverFilter.addAction(Common.INTENT_ACTION_USB_DETACHED);
-        broadcastReceiverFilter.addAction(Common.INTENT_APPLY_SERVICE_DEVICE_ID);
-        broadcastReceiverFilter.addAction(Common.INTENT_GET_SERVICE_DEVICE_ID);
+        broadcastReceiverFilter.addAction(Common.INTENT_START_SERIAL);
 
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -163,25 +160,13 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
                     mUsbPermission = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
                             ? UsbPermission.Granted : UsbPermission.Denied;
                     connectToSerialUsbDevice();
-                    sendAppliedServiceDeviceId();
                 } else if (Common.INTENT_ACTION_USB_ATTACHED.equals(intent.getAction())) {
                     connectToSerialUsbDevice();
-                    sendAppliedServiceDeviceId();
                 } else if (Common.INTENT_ACTION_USB_DETACHED.equals(intent.getAction())) {
                     disconnectFromSerialUsbDevice();
-                    sendAppliedServiceDeviceId();
-                } else if (Common.INTENT_GET_SERVICE_DEVICE_ID.equals(intent.getAction())) {
-                    sendAppliedServiceDeviceId();
-                } else if (Common.INTENT_APPLY_SERVICE_DEVICE_ID.equals(intent.getAction())) {
-                    mDeviceId = intent.getIntExtra("deviceId", -1);
-
-                    SharedPreferences sharedPref = RemoteButtonsService.this.getSharedPreferences("remote_buttons_settings", Context.MODE_PRIVATE);
-                    SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putInt("deviceId", mDeviceId);
-                    editor.apply();
-
+                } else if (Common.INTENT_START_SERIAL.equals(intent.getAction())) {
+                    mDeviceId = Settings.readDeviceId(RemoteButtonsService.this);
                     connectToSerialUsbDevice();
-                    sendAppliedServiceDeviceId();
                 }
             }
         };
@@ -239,6 +224,7 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
             mUsbIoManager = new SerialInputOutputManager(mUsbSerialPort, this);
             mUsbIoManager.start();
             Toast.makeText(this, getString(R.string.successful_connect), Toast.LENGTH_SHORT).show();
+            sendSerialConnectionUpdated(true);
         } catch (Exception e) {
             Toast.makeText(this, getString(R.string.failed_connect) + e.getMessage(), Toast.LENGTH_SHORT).show();
             disconnectFromSerialUsbDevice();
@@ -260,6 +246,7 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
         mUsbSerialPort = null;
         mUsbSerialBuffer = "";
         mUsbPermission = UsbPermission.Unknown;
+        sendSerialConnectionUpdated(false);
     }
 
     public void leftCommand() {
@@ -309,10 +296,10 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
 
     }
 
-    private void sendAppliedServiceDeviceId() {
+    private void sendSerialConnectionUpdated(boolean state) {
         Intent intent = new Intent();
-        intent.setAction(Common.INTENT_APPLIED_SERVICE_DEVICE_ID);
-        intent.putExtra("deviceId", mDeviceId);
+        intent.setAction(Common.INTENT_SERIAL_CONNECTION_UPDATED);
+        intent.putExtra("state", state);
         sendBroadcast(intent);
     }
 

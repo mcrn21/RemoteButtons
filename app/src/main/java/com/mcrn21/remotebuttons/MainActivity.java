@@ -44,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
         initRemoveButton();
         initCommandsTextView();
         initBroadcastReceiver();
+
+        updateCurrentSerialUsbDeviceLabel(Settings.readDeviceId(this));
     }
 
     @Override
@@ -104,7 +106,10 @@ public class MainActivity extends AppCompatActivity {
                 adapter.setOnClickListener(new SerialUsbDevicesAdapter.OnClickListener() {
                     @Override
                     public void onClick(int position, SerialUsbDevice usbDevice) {
-                        sendApplyServiceDeviceId(usbDevice.getDeviceId());
+                        int deviceId = usbDevice.getDeviceId();
+                        Settings.writeDeviceId(deviceId, MainActivity.this);
+                        updateCurrentSerialUsbDeviceLabel(deviceId);
+                        sendStartSerial();
                         dialog.dismiss();
                     }
                 });
@@ -117,7 +122,9 @@ public class MainActivity extends AppCompatActivity {
         removeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendApplyServiceDeviceId(-1);
+                Settings.writeDeviceId(-1, MainActivity.this);
+                updateCurrentSerialUsbDeviceLabel(-1);
+                sendStartSerial();
             }
         });
     }
@@ -129,15 +136,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void initBroadcastReceiver() {
         IntentFilter broadcastFilter = new IntentFilter();
-        broadcastFilter.addAction(Common.INTENT_APPLIED_SERVICE_DEVICE_ID);
+        broadcastFilter.addAction(Common.INTENT_SERIAL_CONNECTION_UPDATED);
         broadcastFilter.addAction(Common.INTENT_REMOTE_BUTTONS_COMMAND);
 
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (Common.INTENT_APPLIED_SERVICE_DEVICE_ID.equals(intent.getAction())) {
-                    int deviceId = intent.getIntExtra("deviceId", -1);
-                    updateCurrentSerialUsbDeviceLabel(deviceId);
+                if (Common.INTENT_SERIAL_CONNECTION_UPDATED.equals(intent.getAction())) {
+                    boolean state = intent.getBooleanExtra("state", false);
+                    updateCurrentSerialUsbDeviceLabel(state ? Settings.readDeviceId(MainActivity.this) : -1);
                 } else if (Common.INTENT_REMOTE_BUTTONS_COMMAND.equals(intent.getAction())) {
                     String command = intent.getStringExtra("command");
 
@@ -159,16 +166,11 @@ public class MainActivity extends AppCompatActivity {
 
         Intent serviceIntent = new Intent(this, RemoteButtonsService.class);
         startService(serviceIntent);
-
-        Intent getCurrentDeviceIdIntent = new Intent();
-        getCurrentDeviceIdIntent.setAction(Common.INTENT_GET_SERVICE_DEVICE_ID);
-        sendBroadcast(getCurrentDeviceIdIntent);
     }
 
-    private void sendApplyServiceDeviceId(int deviceId) {
+    private void sendStartSerial() {
         Intent intent = new Intent();
-        intent.setAction(Common.INTENT_APPLY_SERVICE_DEVICE_ID);
-        intent.putExtra("deviceId", deviceId);
+        intent.setAction(Common.INTENT_START_SERIAL);
         sendBroadcast(intent);
     }
 
