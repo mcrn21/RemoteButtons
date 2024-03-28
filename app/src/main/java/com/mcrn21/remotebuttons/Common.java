@@ -1,4 +1,4 @@
-package com.zsashka21.remotebuttons;
+package com.mcrn21.remotebuttons;
 
 public class Common {
     static String APPLICATION_ID = "com.zsashka21.remotebuttons";

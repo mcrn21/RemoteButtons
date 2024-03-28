@@ -1,4 +1,4 @@
-package com.zsashka21.remotebuttons;
+package com.mcrn21.remotebuttons;
 
 import android.app.Notification;
 import android.app.NotificationChannel;

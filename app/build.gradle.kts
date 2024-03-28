@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace = "com.zsashka21.remotebuttons"
+    namespace = "com.mcrn21.remotebuttons"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.zsashka21.remotebuttons"
+        applicationId = "com.mcrn21.remotebuttons"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
