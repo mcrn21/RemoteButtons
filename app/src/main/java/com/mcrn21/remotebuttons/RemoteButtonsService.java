@@ -203,7 +203,8 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
             mUsbSerialPort.open(usbConnection);
 
             try{
-                mUsbSerialPort.setParameters(9600, 8, 1, UsbSerialPort.PARITY_NONE);
+                Settings.Connection conn = Settings.readConnectionSettings(this);
+                mUsbSerialPort.setParameters(conn.baudRate, conn.dataBits, conn.stopBits, conn.parity);
             }catch (UnsupportedOperationException e){
                 Toast.makeText(this, getString(R.string.unsupported_serial_port_parameters), Toast.LENGTH_SHORT).show();
             }
