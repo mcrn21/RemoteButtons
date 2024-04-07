@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ServiceCompat;
 
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
@@ -29,33 +30,24 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
-public class RemoteButtonsService  extends Service implements SerialInputOutputManager.Listener {
+public class RemoteButtonsService  extends Service {
     private boolean mIsRunning = false;
-    private enum UsbPermission { Unknown, Requested, Granted, Denied }
+    private SerialUsbDeviceConnection mSerialUsbDeviceConnection = null;
     private BroadcastReceiver mBroadcastReceiver;
-    private UsbPermission mUsbPermission = UsbPermission.Unknown;
-    private SerialInputOutputManager mUsbIoManager = null;
-    private UsbSerialPort mUsbSerialPort = null;
-    private String mUsbSerialBuffer = "";
-    private int mDeviceId = -1;
-
-    public RemoteButtonsService() {}
 
     @Override
     public void onCreate() {
         super.onCreate();
-        createNotificationChannel();
         initBroadcastReceiver();
-
-        mDeviceId = Settings.readDeviceId(this);
-        connectToSerialUsbDevice();
+        initSerialUsbDeviceConnection();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (!mIsRunning) {
-            startForeground();
             mIsRunning = true;
+            NotificationsHelper.createNotificationChannel(this);
+            startForeground(Common.SERVICE_ID, NotificationsHelper.buildNotification(this));
         }
         return START_STICKY;
     }
@@ -74,65 +66,6 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
         super.onDestroy();
     }
 
-    @Override
-    public void onNewData(byte[] data) {
-        mUsbSerialBuffer += new String(data);
-
-        while (true) {
-            int p = mUsbSerialBuffer.indexOf("\r\n");
-            if (p == -1)
-                break;
-
-            String command = mUsbSerialBuffer.substring(0, p);
-            mUsbSerialBuffer = mUsbSerialBuffer.substring(p + 2);
-
-            if (!command.isEmpty()) {
-                sendRemoteButtonsCommand(command);
-
-                try {
-                    Commands.class.getMethod(command, RemoteButtonsService.class).invoke(null, this);
-                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onRunError(Exception e) {
-
-    }
-
-    private void startForeground() {
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,
-                0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
-
-        Notification notification = new NotificationCompat.Builder(this, Common.NOTIFICATIONS_CHANNEL_ID)
-                .setContentTitle(getString(R.string.remote_buttons_notify_title))
-                .setContentText(getString(R.string.remote_buttons_notify_text))
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setOngoing(true)
-                .setAutoCancel(false)
-                .setContentIntent(pendingIntent)
-                .build();
-
-        startForeground(Common.SERVICE_ID, notification);
-    }
-
-    private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            String appName = getString(R.string.app_name);
-            NotificationChannel serviceChannel = new NotificationChannel(
-                    Common.NOTIFICATIONS_CHANNEL_ID,
-                    appName,
-                    NotificationManager.IMPORTANCE_DEFAULT
-            );
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(serviceChannel);
-        }
-    }
-
     private void initBroadcastReceiver() {
         IntentFilter broadcastReceiverFilter = new IntentFilter();
         broadcastReceiverFilter.addAction(Common.INTENT_ACTION_GRANT_USB);
@@ -144,97 +77,50 @@ public class RemoteButtonsService  extends Service implements SerialInputOutputM
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (Common.INTENT_ACTION_GRANT_USB.equals(intent.getAction())) {
-                    mUsbPermission = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
-                            ? UsbPermission.Granted : UsbPermission.Denied;
-                    connectToSerialUsbDevice();
+                    mSerialUsbDeviceConnection.setUsbPermission(intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
+                            ? SerialUsbDeviceConnection.UsbPermission.Granted : SerialUsbDeviceConnection.UsbPermission.Denied);
+                    mSerialUsbDeviceConnection.connect();
                 } else if (Common.INTENT_ACTION_USB_ATTACHED.equals(intent.getAction())) {
-                    connectToSerialUsbDevice();
+                    mSerialUsbDeviceConnection.connect();
                 } else if (Common.INTENT_ACTION_USB_DETACHED.equals(intent.getAction())) {
-                    disconnectFromSerialUsbDevice();
+                    mSerialUsbDeviceConnection.disconnect();
                 } else if (Common.INTENT_START_SERIAL.equals(intent.getAction())) {
-                    mDeviceId = Settings.readDeviceId(RemoteButtonsService.this);
-                    connectToSerialUsbDevice();
+                    mSerialUsbDeviceConnection.setDeviceId(Settings.readDeviceId(RemoteButtonsService.this));
+                    mSerialUsbDeviceConnection.setSettingsConn(Settings.readConnectionSettings(RemoteButtonsService.this));
+                    mSerialUsbDeviceConnection.connect();
                 }
             }
         };
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            registerReceiver(mBroadcastReceiver, broadcastReceiverFilter, RECEIVER_EXPORTED);
-        else
-            registerReceiver(mBroadcastReceiver, broadcastReceiverFilter);
+        registerReceiver(mBroadcastReceiver, broadcastReceiverFilter, RECEIVER_EXPORTED);
     }
 
-    private void connectToSerialUsbDevice() {
-        disconnectFromSerialUsbDevice();
+    private void initSerialUsbDeviceConnection() {
+        mSerialUsbDeviceConnection = new SerialUsbDeviceConnection(this);
 
-        SerialUsbDevice serialUsbDevice = SerialUsbDevice.getSerialUsbDevice(mDeviceId, this);
-
-        if (serialUsbDevice == null)
-            return;
-
-        if (serialUsbDevice.getDriver() == null) {
-            Toast.makeText(this, getString(R.string.driver_not_found), Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
-        mUsbSerialPort = serialUsbDevice.getDriver().getPorts().get(serialUsbDevice.getPort());
-        UsbDeviceConnection usbConnection = usbManager.openDevice(serialUsbDevice.getDevice());
-
-        if(usbConnection == null && mUsbPermission == UsbPermission.Unknown && !usbManager.hasPermission(serialUsbDevice.getDevice())) {
-            mUsbPermission = UsbPermission.Requested;
-            int flags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_MUTABLE : 0;
-            Intent intent = new Intent(Common.INTENT_ACTION_GRANT_USB);
-            intent.setPackage(getPackageName());
-            PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(this, 0, intent, flags);
-            usbManager.requestPermission(serialUsbDevice.getDevice(), usbPermissionIntent);
-            return;
-        }
-
-        if(usbConnection == null) {
-            if (!usbManager.hasPermission(serialUsbDevice.getDevice()))
-                Toast.makeText(this, getString(R.string.open_connection_permissions_denied), Toast.LENGTH_SHORT).show();
-            else
-                Toast.makeText(this, getString(R.string.open_connection_failed), Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        try {
-            mUsbSerialPort.open(usbConnection);
-
-            try{
-                Settings.Connection conn = Settings.readConnectionSettings(this);
-                mUsbSerialPort.setParameters(conn.baudRate, conn.dataBits, conn.stopBits, conn.parity);
-            }catch (UnsupportedOperationException e){
-                Toast.makeText(this, getString(R.string.unsupported_serial_port_parameters), Toast.LENGTH_SHORT).show();
+        mSerialUsbDeviceConnection.setOnStateChangedListener(new SerialUsbDeviceConnection.OnStateChangedListener() {
+            @Override
+            public void onChanged(boolean state, CharSequence text) {
+                Toast.makeText(RemoteButtonsService.this, text, Toast.LENGTH_SHORT).show();
+                sendSerialConnectionUpdated(state);
             }
+        });
 
-            mUsbIoManager = new SerialInputOutputManager(mUsbSerialPort, this);
-            mUsbIoManager.start();
-            Toast.makeText(this, getString(R.string.successful_connect), Toast.LENGTH_SHORT).show();
-            sendSerialConnectionUpdated(true);
-        } catch (Exception e) {
-            Toast.makeText(this, getString(R.string.failed_connect) + e.getMessage(), Toast.LENGTH_SHORT).show();
-            disconnectFromSerialUsbDevice();
-        }
-    }
+        mSerialUsbDeviceConnection.setOnCommandListener(new SerialUsbDeviceConnection.OnCommandListener() {
+            @Override
+            public void onCommand(String command) {
+                sendRemoteButtonsCommand(command);
+                try {
+                    Commands.class.getMethod(command, RemoteButtonsService.class).invoke(null, RemoteButtonsService.this);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
 
-    private void disconnectFromSerialUsbDevice() {
-        if(mUsbIoManager != null) {
-            mUsbIoManager.setListener(null);
-            mUsbIoManager.stop();
-        }
-
-        try {
-            if(mUsbSerialPort != null)
-                mUsbSerialPort.close();
-        } catch (IOException ignored) {}
-
-        mUsbIoManager = null;
-        mUsbSerialPort = null;
-        mUsbSerialBuffer = "";
-        mUsbPermission = UsbPermission.Unknown;
-        sendSerialConnectionUpdated(false);
+        mSerialUsbDeviceConnection.setDeviceId(Settings.readDeviceId(this));
+        mSerialUsbDeviceConnection.setSettingsConn(Settings.readConnectionSettings(this));
+        mSerialUsbDeviceConnection.connect();
     }
 
     private void sendSerialConnectionUpdated(boolean state) {

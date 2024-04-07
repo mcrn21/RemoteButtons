@@ -1,6 +1,9 @@
 package com.mcrn21.remotebuttons;
 
+import android.app.ActivityOptions;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.view.KeyEvent;
 
@@ -49,6 +52,18 @@ public class Commands {
     }
 
     public static void right_down(RemoteButtonsService service) {
+        boolean launch = Settings.readLaunchApp(service);
+        if (!launch)
+            return;
 
+        String launchPackageName = Settings.readLaunchPackageName(service);
+        Intent intent = service.getPackageManager().getLaunchIntentForPackage(launchPackageName);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                service, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        try {
+            pendingIntent.send();
+        } catch (PendingIntent.CanceledException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

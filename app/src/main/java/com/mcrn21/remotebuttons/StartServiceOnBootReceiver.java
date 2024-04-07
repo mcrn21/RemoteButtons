@@ -9,7 +9,7 @@ public class StartServiceOnBootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             Intent serviceIntent = new Intent(context, RemoteButtonsService.class);
-            context.startService(serviceIntent);
+            context.startForegroundService(serviceIntent);
         }
     }
 }

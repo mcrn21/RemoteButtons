@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">RemoteButtons</string>
-    <string name="current_device_label">Current device:</string>
+    <string name="current_device">Current device</string>
     <string name="select">Select</string>
     <string name="remove">Remove</string>
     <string name="select_device_label">Select device</string>
     <string name="cancel">Cancel</string>
-    <string name="received_commands_history_label">Received commands history:</string>
+    <string name="commands_history">Commands history</string>
     <string name="remote_buttons_notify_title">Remote buttons</string>
     <string name="remote_buttons_notify_text">Remote buttons for android multimedia</string>
     <string name="driver_not_found">Driver not found for remote buttons device</string>
@@ -13,6 +13,7 @@
     <string name="open_connection_failed">Connection to remote buttons device failed: open failed</string>
     <string name="unsupported_serial_port_parameters">Unsupported parameters for serial port</string>
     <string name="successful_connect">Successful connected to the remote buttons device</string>
+    <string name="disconnect">Disconnect from the remote buttons device</string>
     <string name="failed_connect">Connection to remote buttons device failed: </string>
     <string name="about">About</string>
     <string name="no_device">no device</string>
@@ -24,6 +25,11 @@
     <string name="stop_bits_label">Stop Bits:</string>
     <string name="save">Save</string>
     <string name="connection_settings">Connection settings</string>
+    <string name="select_app">Select app</string>
+    <string name="clear_history">Clear history</string>
+    <string name="remove_device">Remove device</string>
+    <string name="settings_device">Settings device</string>
+    <string name="launch_app">Launch app</string>
 
     <string-array name="baud_rate_list">
         <item>300</item>

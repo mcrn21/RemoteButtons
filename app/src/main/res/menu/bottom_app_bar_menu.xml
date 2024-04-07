@@ -3,24 +3,17 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/settings_device_item"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/ic_link_settings"
+        android:title="@string/settings_device"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/remove_device_item"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:icon="@drawable/ic_unplug"
-        android:title="Item"
-        app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/clear_log_item"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:icon="@drawable/ic_eraser"
-        android:title="Item"
-        app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/settings_item"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:icon="@drawable/ic_gear"
-        android:title="Item"
-        app:showAsAction="ifRoom" />
+        android:icon="@drawable/ic_link_off"
+        android:title="@string/remove_device"
+        app:showAsAction="always" />
 </menu>

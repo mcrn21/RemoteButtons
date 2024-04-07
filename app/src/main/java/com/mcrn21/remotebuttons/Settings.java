@@ -47,4 +47,26 @@ public class Settings {
         editor.putInt("stopBits", conn.stopBits);
         editor.apply();
     }
+    static public String readLaunchPackageName(Context context) {
+        SharedPreferences sharedPref = context.getSharedPreferences(Common.SETTINGS_FILE, Context.MODE_PRIVATE);
+        return sharedPref.getString("launchPackageName", "");
+    }
+    static public void writeLaunchPackageName(String packageName, Context context) {
+        SharedPreferences sharedPref = context.getSharedPreferences(Common.SETTINGS_FILE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString("launchPackageName", packageName);
+        editor.apply();
+    }
+
+    static public boolean readLaunchApp(Context context) {
+        SharedPreferences sharedPref = context.getSharedPreferences(Common.SETTINGS_FILE, Context.MODE_PRIVATE);
+        return sharedPref.getBoolean("launchApp", false);
+    }
+
+    static public void writeLaunchApp(boolean launch, Context context) {
+        SharedPreferences sharedPref = context.getSharedPreferences(Common.SETTINGS_FILE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putBoolean("launchApp", launch);
+        editor.apply();
+    }
 }
