@@ -85,8 +85,8 @@ public class RemoteButtonsService  extends Service {
                 } else if (Common.INTENT_ACTION_USB_DETACHED.equals(intent.getAction())) {
                     mSerialUsbDeviceConnection.disconnect();
                 } else if (Common.INTENT_START_SERIAL.equals(intent.getAction())) {
-                    mSerialUsbDeviceConnection.setDeviceId(Settings.readDeviceId(RemoteButtonsService.this));
-                    mSerialUsbDeviceConnection.setSettingsConn(Settings.readConnectionSettings(RemoteButtonsService.this));
+                    mSerialUsbDeviceConnection.setDeviceInfo(Settings.readDeviceInfo(RemoteButtonsService.this));
+                    mSerialUsbDeviceConnection.setParams(Settings.readConnectionParams(RemoteButtonsService.this));
                     mSerialUsbDeviceConnection.connect();
                 }
             }
@@ -118,8 +118,8 @@ public class RemoteButtonsService  extends Service {
             }
         });
 
-        mSerialUsbDeviceConnection.setDeviceId(Settings.readDeviceId(this));
-        mSerialUsbDeviceConnection.setSettingsConn(Settings.readConnectionSettings(this));
+        mSerialUsbDeviceConnection.setDeviceInfo(Settings.readDeviceInfo(this));
+        mSerialUsbDeviceConnection.setParams(Settings.readConnectionParams(this));
         mSerialUsbDeviceConnection.connect();
     }
 

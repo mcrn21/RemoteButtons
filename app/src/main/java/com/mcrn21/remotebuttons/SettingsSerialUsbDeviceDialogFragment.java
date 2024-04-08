@@ -31,7 +31,7 @@ public class SettingsSerialUsbDeviceDialogFragment extends DialogFragment {
         View view = getLayoutInflater().inflate(R.layout.dialog_connection_settings, null);
         dialogBuilder.setView(view);
 
-        Settings.Connection conn = Settings.readConnectionSettings(requireContext());
+        SerialUsbDeviceConnection.Params params = Settings.readConnectionParams(requireContext());
 
         // Baud rate
         List<String> baudRateList = Arrays.asList(getResources().getStringArray(R.array.baud_rate_list));
@@ -39,7 +39,7 @@ public class SettingsSerialUsbDeviceDialogFragment extends DialogFragment {
         MaterialAutoCompleteTextView baudRateTextView = (MaterialAutoCompleteTextView) view.findViewById(R.id.baud_rate_text_view);
         baudRateTextView.setAdapter(baudRateArrayAdapter);
         baudRateTextView.setInputType(0);
-        int baudRateIndex = baudRateList.indexOf(String.valueOf(conn.baudRate));
+        int baudRateIndex = params == null ? 0 : baudRateList.indexOf(String.valueOf(params.baudRate));
         baudRateTextView.setText((String) baudRateArrayAdapter.getItem(baudRateIndex), false);
 
         // Data bits
@@ -48,7 +48,7 @@ public class SettingsSerialUsbDeviceDialogFragment extends DialogFragment {
         MaterialAutoCompleteTextView dataBitsTextView = (MaterialAutoCompleteTextView) view.findViewById(R.id.data_bits_text_view);
         dataBitsTextView.setAdapter(dataBitsArrayAdapter);
         dataBitsTextView.setInputType(0);
-        int dataBitsIndex = dataBitsList.indexOf(String.valueOf(conn.dataBits));
+        int dataBitsIndex = params == null ? 0 : dataBitsList.indexOf(String.valueOf(params.dataBits));
         dataBitsTextView.setText((String) dataBitsArrayAdapter.getItem(dataBitsIndex), false);
 
         // Parity
@@ -57,7 +57,7 @@ public class SettingsSerialUsbDeviceDialogFragment extends DialogFragment {
         MaterialAutoCompleteTextView parityTextView = (MaterialAutoCompleteTextView) view.findViewById(R.id.parity_text_view);
         parityTextView.setAdapter(parityArrayAdapter);
         parityTextView.setInputType(0);
-        parityTextView.setText((String) parityArrayAdapter.getItem(conn.parity), false);
+        parityTextView.setText((String) parityArrayAdapter.getItem(params == null ? 0 : params.parity), false);
 
         // Stop bits
         List<String> stopBitsList = Arrays.asList(getResources().getStringArray(R.array.stop_bits_list));
@@ -65,17 +65,17 @@ public class SettingsSerialUsbDeviceDialogFragment extends DialogFragment {
         MaterialAutoCompleteTextView stopBitsTextView = (MaterialAutoCompleteTextView) view.findViewById(R.id.stop_bits_text_view);
         stopBitsTextView.setAdapter(stopBitsArrayAdapter);
         stopBitsTextView.setInputType(0);
-        stopBitsTextView.setText((String) stopBitsArrayAdapter.getItem(conn.stopBits - 1), false);
+        stopBitsTextView.setText((String) stopBitsArrayAdapter.getItem(params == null ? 0 : params.stopBits - 1), false);
 
         dialogBuilder.setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Settings.Connection conn = new Settings.Connection();
-                conn.baudRate = Integer.parseInt(baudRateTextView.getText().toString());
-                conn.dataBits = Integer.parseInt(dataBitsTextView.getText().toString());
-                conn.parity = parityList.indexOf(parityTextView.getText().toString());
-                conn.stopBits = stopBitsList.indexOf(stopBitsTextView.getText().toString()) + 1;
-                Settings.writeConnectionSettings(conn, requireContext());
+                SerialUsbDeviceConnection.Params params = new SerialUsbDeviceConnection.Params();
+                params.baudRate = Integer.parseInt(baudRateTextView.getText().toString());
+                params.dataBits = Integer.parseInt(dataBitsTextView.getText().toString());
+                params.parity = parityList.indexOf(parityTextView.getText().toString());
+                params.stopBits = stopBitsList.indexOf(stopBitsTextView.getText().toString()) + 1;
+                Settings.writeConnectionParams(params, requireContext());
                 mMainActivity.sendStartSerial();
                 dialog.dismiss();
             }

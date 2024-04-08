@@ -52,12 +52,11 @@ public class Commands {
     }
 
     public static void right_down(RemoteButtonsService service) {
-        boolean launch = Settings.readLaunchApp(service);
-        if (!launch)
+        LaunchApp launchApp = Settings.readLaunchApp(service);
+        if (!launchApp.enable)
             return;
 
-        String launchPackageName = Settings.readLaunchPackageName(service);
-        Intent intent = service.getPackageManager().getLaunchIntentForPackage(launchPackageName);
+        Intent intent = service.getPackageManager().getLaunchIntentForPackage(launchApp.packageName);
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 service, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         try {

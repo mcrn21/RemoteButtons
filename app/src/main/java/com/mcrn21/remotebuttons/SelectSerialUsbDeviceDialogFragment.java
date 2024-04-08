@@ -54,9 +54,9 @@ public class SelectSerialUsbDeviceDialogFragment extends DialogFragment {
             public void onClick(DialogInterface dialog, int which) {
                 SerialUsbDevice serialUsbDevice = (SerialUsbDevice) adapter.getItem(which);
                 if (serialUsbDevice != null) {
-                    int deviceId = serialUsbDevice.getDeviceId();
-                    Settings.writeDeviceId(deviceId, requireContext());
-                    mMainActivity.updateCurrentSerialUsbDeviceLabel(deviceId);
+                    SerialUsbDevice.Info deviceInfo = serialUsbDevice.getInfo();
+                    Settings.writeDeviceInfo(deviceInfo, requireContext());
+                    mMainActivity.updateCurrentSerialUsbDeviceLabel(deviceInfo);
                     mMainActivity.sendStartSerial();
                 }
                 dialog.dismiss();

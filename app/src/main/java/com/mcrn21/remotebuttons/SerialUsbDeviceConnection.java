@@ -21,10 +21,23 @@ public class SerialUsbDeviceConnection  implements SerialInputOutputManager.List
     public interface OnCommandListener {
         void onCommand(String command);
     }
+    static public class Params {
+        public Params() {}
+        public Params(int baudRate, int dataBits, int parity, int stopBits) {
+            this.baudRate = baudRate;
+            this.dataBits = dataBits;
+            this.parity = parity;
+            this.stopBits = stopBits;
+        }
+        public int baudRate = 9600;
+        public int dataBits = 8;
+        public int parity = 0;
+        public int stopBits = 1;
+    }
     public enum UsbPermission { Unknown, Requested, Granted, Denied }
     private Context mContext = null;
-    private int mDeviceId = -1;
-    private Settings.Connection mConn = new Settings.Connection();
+    private SerialUsbDevice.Info mDeviceInfo = null;
+    private Params mParams = new Params();
     private UsbPermission mUsbPermission = UsbPermission.Unknown;
     private SerialInputOutputManager mUsbIoManager = null;
     private UsbSerialPort mUsbSerialPort = null;
@@ -36,20 +49,20 @@ public class SerialUsbDeviceConnection  implements SerialInputOutputManager.List
         mContext = context;
     }
 
-    public int getDeviceId() {
-        return mDeviceId;
+    public SerialUsbDevice.Info getDeviceInfo() {
+        return mDeviceInfo;
     }
 
-    public void setDeviceId(int deviceId) {
-        mDeviceId = deviceId;
+    public void setDeviceInfo(SerialUsbDevice.Info deviceInfo) {
+        mDeviceInfo = deviceInfo;
     }
 
-    public Settings.Connection getSettingsConn() {
-        return mConn;
+    public Params getParams() {
+        return mParams;
     }
 
-    public void setSettingsConn(Settings.Connection conn) {
-        mConn = conn;
+    public void setParams(Params params) {
+        mParams = params;
     }
 
     public UsbPermission getUsbPermission() {
@@ -66,7 +79,7 @@ public class SerialUsbDeviceConnection  implements SerialInputOutputManager.List
 
         disconnect();
 
-        SerialUsbDevice serialUsbDevice = SerialUsbDevice.getSerialUsbDevice(mDeviceId, mContext);
+        SerialUsbDevice serialUsbDevice = SerialUsbDevice.getSerialUsbDevice(mDeviceInfo, mContext);
 
         if (serialUsbDevice == null)
             return;
@@ -100,7 +113,7 @@ public class SerialUsbDeviceConnection  implements SerialInputOutputManager.List
             mUsbSerialPort.open(usbConnection);
 
             try{
-                mUsbSerialPort.setParameters(mConn.baudRate, mConn.dataBits, mConn.stopBits, mConn.parity);
+                mUsbSerialPort.setParameters(mParams.baudRate, mParams.dataBits, mParams.stopBits, mParams.parity);
             }catch (UnsupportedOperationException e){
                 stateChanged(false, mContext.getText(R.string.unsupported_serial_port_parameters));
             }

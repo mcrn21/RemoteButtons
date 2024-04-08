@@ -13,6 +13,19 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 public class SerialUsbDevice {
+    static public class Info {
+        int vendor = -1;
+        int product = -1;
+
+        public Info(int vendor, int product) {
+            this.vendor = vendor;
+            this.product = product;
+        }
+
+        public boolean equals(Info other) {
+            return vendor == other.vendor && product == other.product;
+        }
+    }
     UsbDevice mDevice;
     int mPort;
     UsbSerialDriver mDriver;
@@ -35,10 +48,10 @@ public class SerialUsbDevice {
         return mDriver;
     }
 
-    public int getDeviceId() {
+    public Info getInfo() {
         if (mDevice == null)
-            return -1;
-        return mDevice.getDeviceId();
+            return null;
+        return new Info(mDevice.getVendorId(), mDevice.getProductId());
     }
 
     @NonNull
@@ -53,9 +66,9 @@ public class SerialUsbDevice {
             result += mDriver.getClass().getSimpleName().replace("SerialDriver","")+", Port " + mPort + "\n";
 
         if (mDevice == null)
-            result += "Vendor: <no vendor>, Product: <no product>\n<no device id>";
+            result += "Vendor: <no vendor>, Product: <no product>";
         else
-            result += String.format(Locale.US, "Vendor: %04X, Product: %04X", mDevice.getVendorId(), mDevice.getProductId()) + "\n" + mDevice.getDeviceId();
+            result += String.format(Locale.US, "Vendor: %04X, Product: %04X", mDevice.getVendorId(), mDevice.getProductId());
 
         return result;
     }
@@ -78,13 +91,16 @@ public class SerialUsbDevice {
         return serialUsbDevices;
     }
 
-    static public SerialUsbDevice getSerialUsbDevice(int deviceId, Context context) {
-        ArrayList<SerialUsbDevice> avaibleSerialUsbDevices = SerialUsbDevice.getSerialUsbDevices(context);
-        for (SerialUsbDevice avaibleUsbDevice : avaibleSerialUsbDevices) {
-            if (avaibleUsbDevice.getDeviceId() == deviceId) {
-                return avaibleUsbDevice;
-            }
+    static public SerialUsbDevice getSerialUsbDevice(Info deviceInfo, Context context) {
+        if (deviceInfo == null)
+            return null;
+
+        ArrayList<SerialUsbDevice> availableSerialUsbDevices = SerialUsbDevice.getSerialUsbDevices(context);
+        for (SerialUsbDevice serialUsbDevice : availableSerialUsbDevices) {
+            if (serialUsbDevice.getInfo() != null && serialUsbDevice.getInfo().equals(deviceInfo))
+                return serialUsbDevice;
         }
+
         return null;
     }
 }

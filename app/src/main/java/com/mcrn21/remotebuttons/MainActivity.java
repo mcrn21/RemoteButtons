@@ -2,8 +2,6 @@ package com.mcrn21.remotebuttons;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.view.menu.MenuPopupHelper;
-import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.Toolbar;
 
 import android.annotation.SuppressLint;
@@ -22,7 +20,6 @@ import android.text.method.ScrollingMovementMethod;
 import android.text.style.StyleSpan;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -55,8 +52,8 @@ public class MainActivity extends AppCompatActivity {
         Intent serviceIntent = new Intent(this, RemoteButtonsService.class);
         startForegroundService(serviceIntent);
 
-        updateCurrentSerialUsbDeviceLabel(Settings.readDeviceId(this));
-        updateLaunchAppLabel(Settings.readLaunchPackageName(this));
+        updateCurrentSerialUsbDeviceLabel(Settings.readDeviceInfo(this));
+        updateLaunchAppLabel(Settings.readLaunchApp(this));
     }
 
     @Override
@@ -110,8 +107,8 @@ public class MainActivity extends AppCompatActivity {
             public boolean onMenuItemClick(MenuItem item) {
                 int id = item.getItemId();
                 if (id == R.id.remove_device_item) {
-                    Settings.writeDeviceId(-1, MainActivity.this);
-                    updateCurrentSerialUsbDeviceLabel(-1);
+                    Settings.writeDeviceInfo(null, MainActivity.this);
+                    updateCurrentSerialUsbDeviceLabel(null);
                     sendStartSerial();
                     return true;
                 } else if (id == R.id.settings_device_item) {
@@ -138,9 +135,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void initSelectLaunchApp() {
         Switch launchAppSwitch = (Switch) findViewById(R.id.launch_app_switch);
-        launchAppSwitch.setChecked(Settings.readLaunchApp(this));
+        launchAppSwitch.setChecked(Settings.readLaunchApp(this).enable);
+
         launchAppSwitch.setOnClickListener(view -> {
-            Settings.writeLaunchApp(launchAppSwitch.isChecked(), this);
+            LaunchApp launchApp = Settings.readLaunchApp(this);
+            launchApp.enable = launchAppSwitch.isChecked();
+            Settings.writeLaunchApp(launchApp, this);
         });
 
         ImageView selectLaunchAppButton = (ImageView) findViewById(R.id.select_launch_app_button);
@@ -160,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
             public void onReceive(Context context, Intent intent) {
                 if (Common.INTENT_SERIAL_CONNECTION_UPDATED.equals(intent.getAction())) {
                     boolean state = intent.getBooleanExtra("state", false);
-                    updateCurrentSerialUsbDeviceLabel(state ? Settings.readDeviceId(MainActivity.this) : -1);
+                    updateCurrentSerialUsbDeviceLabel(state ? Settings.readDeviceInfo(MainActivity.this) : null);
                 } else if (Common.INTENT_REMOTE_BUTTONS_COMMAND.equals(intent.getAction())) {
                     String command = intent.getStringExtra("command");
 
@@ -184,9 +184,9 @@ public class MainActivity extends AppCompatActivity {
         sendBroadcast(intent);
     }
 
-    public void updateCurrentSerialUsbDeviceLabel(int deviceId) {
+    public void updateCurrentSerialUsbDeviceLabel(SerialUsbDevice.Info info) {
         TextView currentSerialUsbDeviceTextView = (TextView) findViewById(R.id.current_serial_usb_device_text_view);
-        SerialUsbDevice serialUsbDevice = SerialUsbDevice.getSerialUsbDevice(deviceId, this);
+        SerialUsbDevice serialUsbDevice = SerialUsbDevice.getSerialUsbDevice(info, this);
 
         if (serialUsbDevice == null) {
             currentSerialUsbDeviceTextView.setText(R.string.no_device);
@@ -199,12 +199,19 @@ public class MainActivity extends AppCompatActivity {
         currentSerialUsbDeviceTextView.setText(spStr);
     }
 
-    public void updateLaunchAppLabel(String packageName) {
+    public void updateLaunchAppLabel(LaunchApp launchApp) {
+        TextView launchAppNameTextView = (TextView) findViewById(R.id.launch_app_name_text_view);
+        ImageView launchAppIconImageView = (ImageView) findViewById(R.id.launch_app_icon_image_view);
+
+        if (launchApp.packageName.isEmpty()) {
+            launchAppNameTextView.setText(R.string.no_device);
+            launchAppIconImageView.setImageResource(R.drawable.ic_block);
+            return;
+        }
+
         try {
-            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(packageName, 0);
-            TextView launchAppNameTextView = (TextView) findViewById(R.id.launch_app_name_text_view);
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(launchApp.packageName, 0);
             launchAppNameTextView.setText(appInfo.loadLabel(getPackageManager()));
-            ImageView launchAppIconImageView = (ImageView) findViewById(R.id.launch_app_icon_image_view);
             launchAppIconImageView.setImageDrawable(appInfo.loadIcon(getPackageManager()));
         } catch (PackageManager.NameNotFoundException e) { }
     }
