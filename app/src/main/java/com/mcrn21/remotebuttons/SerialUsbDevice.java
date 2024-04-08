@@ -17,6 +17,8 @@ public class SerialUsbDevice {
         int vendor = -1;
         int product = -1;
 
+        public Info() {}
+
         public Info(int vendor, int product) {
             this.vendor = vendor;
             this.product = product;

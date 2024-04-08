@@ -1,34 +1,17 @@
 package com.mcrn21.remotebuttons;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
-import android.media.AudioManager;
-import android.os.Build;
 import android.os.IBinder;
-import android.view.KeyEvent;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.ServiceCompat;
 
-import com.hoho.android.usbserial.driver.UsbSerialPort;
-import com.hoho.android.usbserial.util.SerialInputOutputManager;
-
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
 
 public class RemoteButtonsService  extends Service {
     private boolean mIsRunning = false;
@@ -38,6 +21,9 @@ public class RemoteButtonsService  extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        Settings.getInstance().load(this);
+
         initBroadcastReceiver();
         initSerialUsbDeviceConnection();
     }
@@ -60,6 +46,7 @@ public class RemoteButtonsService  extends Service {
 
     @Override
     public void onDestroy() {
+        Settings.getInstance().save(this);
         unregisterReceiver(mBroadcastReceiver);
         stopForeground(true);
         mIsRunning = false;
@@ -85,8 +72,8 @@ public class RemoteButtonsService  extends Service {
                 } else if (Common.INTENT_ACTION_USB_DETACHED.equals(intent.getAction())) {
                     mSerialUsbDeviceConnection.disconnect();
                 } else if (Common.INTENT_START_SERIAL.equals(intent.getAction())) {
-                    mSerialUsbDeviceConnection.setDeviceInfo(Settings.readDeviceInfo(RemoteButtonsService.this));
-                    mSerialUsbDeviceConnection.setParams(Settings.readConnectionParams(RemoteButtonsService.this));
+                    mSerialUsbDeviceConnection.setDeviceInfo(Settings.getInstance().deviceInfo);
+                    mSerialUsbDeviceConnection.setParams(Settings.getInstance().connectionParams);
                     mSerialUsbDeviceConnection.connect();
                 }
             }
@@ -118,8 +105,8 @@ public class RemoteButtonsService  extends Service {
             }
         });
 
-        mSerialUsbDeviceConnection.setDeviceInfo(Settings.readDeviceInfo(this));
-        mSerialUsbDeviceConnection.setParams(Settings.readConnectionParams(this));
+        mSerialUsbDeviceConnection.setDeviceInfo(Settings.getInstance().deviceInfo);
+        mSerialUsbDeviceConnection.setParams(Settings.getInstance().connectionParams);
         mSerialUsbDeviceConnection.connect();
     }
 

@@ -31,7 +31,7 @@ public class SettingsSerialUsbDeviceDialogFragment extends DialogFragment {
         View view = getLayoutInflater().inflate(R.layout.dialog_connection_settings, null);
         dialogBuilder.setView(view);
 
-        SerialUsbDeviceConnection.Params params = Settings.readConnectionParams(requireContext());
+        SerialUsbDeviceConnection.Params params = Settings.getInstance().connectionParams;
 
         // Baud rate
         List<String> baudRateList = Arrays.asList(getResources().getStringArray(R.array.baud_rate_list));
@@ -75,7 +75,7 @@ public class SettingsSerialUsbDeviceDialogFragment extends DialogFragment {
                 params.dataBits = Integer.parseInt(dataBitsTextView.getText().toString());
                 params.parity = parityList.indexOf(parityTextView.getText().toString());
                 params.stopBits = stopBitsList.indexOf(stopBitsTextView.getText().toString()) + 1;
-                Settings.writeConnectionParams(params, requireContext());
+                Settings.getInstance().connectionParams = params;
                 mMainActivity.sendStartSerial();
                 dialog.dismiss();
             }

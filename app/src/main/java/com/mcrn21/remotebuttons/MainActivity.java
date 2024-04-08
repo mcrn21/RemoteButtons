@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Settings.getInstance().load(this);
+
         initAppBar();
         initBottomAppBar();
         initCommandsHistory();
@@ -52,12 +54,13 @@ public class MainActivity extends AppCompatActivity {
         Intent serviceIntent = new Intent(this, RemoteButtonsService.class);
         startForegroundService(serviceIntent);
 
-        updateCurrentSerialUsbDeviceLabel(Settings.readDeviceInfo(this));
-        updateLaunchAppLabel(Settings.readLaunchApp(this));
+        updateCurrentSerialUsbDeviceLabel(Settings.getInstance().deviceInfo);
+        updateLaunchAppLabel(Settings.getInstance().launchAppPackageName);
     }
 
     @Override
     protected void onDestroy() {
+        Settings.getInstance().save(this);
         unregisterReceiver(mBroadcastReceiver);
         super.onDestroy();
     }
@@ -107,8 +110,8 @@ public class MainActivity extends AppCompatActivity {
             public boolean onMenuItemClick(MenuItem item) {
                 int id = item.getItemId();
                 if (id == R.id.remove_device_item) {
-                    Settings.writeDeviceInfo(null, MainActivity.this);
-                    updateCurrentSerialUsbDeviceLabel(null);
+                    Settings.getInstance().deviceInfo = new SerialUsbDevice.Info();
+                    updateCurrentSerialUsbDeviceLabel(Settings.getInstance().deviceInfo);
                     sendStartSerial();
                     return true;
                 } else if (id == R.id.settings_device_item) {
@@ -135,12 +138,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void initSelectLaunchApp() {
         Switch launchAppSwitch = (Switch) findViewById(R.id.launch_app_switch);
-        launchAppSwitch.setChecked(Settings.readLaunchApp(this).enable);
+        launchAppSwitch.setChecked(Settings.getInstance().launchAppEnable);
 
         launchAppSwitch.setOnClickListener(view -> {
-            LaunchApp launchApp = Settings.readLaunchApp(this);
-            launchApp.enable = launchAppSwitch.isChecked();
-            Settings.writeLaunchApp(launchApp, this);
+            Settings.getInstance().launchAppEnable = launchAppSwitch.isChecked();
         });
 
         ImageView selectLaunchAppButton = (ImageView) findViewById(R.id.select_launch_app_button);
@@ -159,8 +160,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (Common.INTENT_SERIAL_CONNECTION_UPDATED.equals(intent.getAction())) {
-                    boolean state = intent.getBooleanExtra("state", false);
-                    updateCurrentSerialUsbDeviceLabel(state ? Settings.readDeviceInfo(MainActivity.this) : null);
+                    updateCurrentSerialUsbDeviceLabel(Settings.getInstance().deviceInfo);
                 } else if (Common.INTENT_REMOTE_BUTTONS_COMMAND.equals(intent.getAction())) {
                     String command = intent.getStringExtra("command");
 
@@ -199,21 +199,18 @@ public class MainActivity extends AppCompatActivity {
         currentSerialUsbDeviceTextView.setText(spStr);
     }
 
-    public void updateLaunchAppLabel(LaunchApp launchApp) {
+    public void updateLaunchAppLabel(String packageName) {
         TextView launchAppNameTextView = (TextView) findViewById(R.id.launch_app_name_text_view);
         ImageView launchAppIconImageView = (ImageView) findViewById(R.id.launch_app_icon_image_view);
 
-        if (launchApp.packageName.isEmpty()) {
-            launchAppNameTextView.setText(R.string.no_device);
-            launchAppIconImageView.setImageResource(R.drawable.ic_block);
-            return;
-        }
-
         try {
-            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(launchApp.packageName, 0);
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(packageName, 0);
             launchAppNameTextView.setText(appInfo.loadLabel(getPackageManager()));
             launchAppIconImageView.setImageDrawable(appInfo.loadIcon(getPackageManager()));
-        } catch (PackageManager.NameNotFoundException e) { }
+        } catch (PackageManager.NameNotFoundException e) {
+            launchAppNameTextView.setText(R.string.no_device);
+            launchAppIconImageView.setImageResource(R.drawable.ic_block);
+        }
     }
 
     private void updateCommandsHistoryLabel() {

@@ -58,10 +58,8 @@ public class SelectAppDialogFragment extends DialogFragment {
             public void onClick(DialogInterface dialog, int which) {
                 ApplicationInfo appInfo = (ApplicationInfo) adapter.getItem(which);
                 if (appInfo != null) {
-                    LaunchApp launchApp = Settings.readLaunchApp(requireContext());
-                    launchApp.packageName = appInfo.packageName;
-                    Settings.writeLaunchApp(launchApp, requireContext());
-                    mMainActivity.updateLaunchAppLabel(launchApp);
+                    Settings.getInstance().launchAppPackageName = appInfo.packageName;
+                    mMainActivity.updateLaunchAppLabel(appInfo.packageName);
                     dialog.dismiss();
                 }
             }
