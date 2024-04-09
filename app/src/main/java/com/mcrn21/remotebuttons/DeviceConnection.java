@@ -66,6 +66,9 @@ public class DeviceConnection implements SerialInputOutputManager.Listener {
 
         disconnect();
 
+        if (mDevice == null)
+            return;
+
         UsbDevice usbDevice = null;
         UsbManager usbManager = (UsbManager) mContext.getSystemService(Context.USB_SERVICE);
 

@@ -3,6 +3,10 @@ package com.mcrn21.remotebuttons;
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import androidx.annotation.NonNull;
 
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
@@ -10,7 +14,7 @@ import com.hoho.android.usbserial.driver.UsbSerialProber;
 import java.util.ArrayList;
 import java.util.Locale;
 
-public class Device {
+public class Device implements Parcelable {
     public int vendorId = -1;
     public int productId = -1;
     public int port = -1;
@@ -23,6 +27,13 @@ public class Device {
         this.productId = productId;
         this.port = port;
         this.description = description;
+    }
+
+    private Device(Parcel in) {
+        vendorId = in.readInt();
+        productId = in.readInt();
+        port = in.readInt();
+        description = in.readString();
     }
 
     public boolean isValid() {
@@ -71,4 +82,27 @@ public class Device {
 
         return description;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(@NonNull Parcel out, int flags) {
+        out.writeInt(vendorId);
+        out.writeInt(productId);
+        out.writeInt(port);
+        out.writeString(description);
+    }
+
+    public static final Parcelable.Creator<Device> CREATOR = new Parcelable.Creator<Device>() {
+        public Device createFromParcel(Parcel in) {
+            return new Device(in);
+        }
+        public Device[] newArray(int size) {
+            return new Device[size];
+        }
+    };
+
 }

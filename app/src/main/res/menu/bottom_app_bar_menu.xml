@@ -6,7 +6,7 @@
         android:id="@+id/settings_device_item"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:icon="@drawable/ic_link_settings"
+        android:icon="@drawable/ic_settings"
         android:title="@string/settings_device"
         app:showAsAction="always" />
     <item

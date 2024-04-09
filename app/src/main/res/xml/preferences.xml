@@ -1,13 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:key="launchAppEnable"
+        android:summary="@string/launch_app_descr"
+        android:title="@string/launch_app"></CheckBoxPreference>
 
-    <SwitchPreferenceCompat
-        app:key="notifications"
-        app:title="Enable message notifications"/>
+    <PreferenceCategory
+        android:title="@string/connection_parameters_preference"
+        app:icon="@drawable/ic_link_settings">
 
-    <Preference
-        app:key="feedback"
-        app:title="Send feedback"
-        app:summary="Report technical issues or suggest new features"/>
+        <ListPreference
+            android:defaultValue="9600"
+            android:dialogTitle="Select baud rate"
+            android:entries="@array/baud_rate_list"
+            android:entryValues="@array/baud_rate_list"
+            android:key="baudRate"
+            android:title="@string/baud_rate"
+            app:summary="@string/baud_rate_descr" />
+
+        <ListPreference
+            android:defaultValue="8"
+            android:dialogTitle="Select data bits"
+            android:entries="@array/data_bits_list"
+            android:entryValues="@array/data_bits_list"
+            android:key="dataBits"
+            android:title="@string/data_bits"
+            app:summary="@string/data_bits_descr" />
+
+        <ListPreference
+            android:defaultValue="0"
+            android:dialogTitle="Select parity"
+            android:entries="@array/parity_list"
+            android:entryValues="@array/parity_list_values"
+            android:key="parity"
+            android:title="@string/parity"
+            app:summary="@string/parity_descr" />
+
+        <ListPreference
+            android:defaultValue="1"
+            android:dialogTitle="Select stop bits"
+            android:entries="@array/stop_bits_list"
+            android:entryValues="@array/stop_bits_list_values"
+            android:key="stopBits"
+            android:title="@string/stop_bits"
+            app:summary="@string/stop_bits_descr" />
+
+    </PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

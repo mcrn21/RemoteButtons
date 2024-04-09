@@ -19,11 +19,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
 public class SelectDeviceDialogFragment extends DialogFragment {
-    MainActivity mMainActivity = null;
-
-    SelectDeviceDialogFragment(MainActivity mainActivity) {
-        mMainActivity = mainActivity;
-    }
+    SelectDeviceDialogFragment() {}
 
     @NonNull
     @Override
@@ -55,9 +51,9 @@ public class SelectDeviceDialogFragment extends DialogFragment {
             public void onClick(DialogInterface dialog, int which) {
                 Device device = (Device) adapter.getItem(which);
                 if (device != null) {
-                    Settings.getInstance().device = device;
-                    mMainActivity.updateCurrentSerialUsbDeviceLabel(device);
-                    mMainActivity.sendStartSerial();
+                    Bundle result = new Bundle();
+                    result.putParcelable("device", device);
+                    getParentFragmentManager().setFragmentResult("deviceSelected", result);
                 }
                 dialog.dismiss();
             }

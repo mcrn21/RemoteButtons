@@ -20,11 +20,7 @@ import androidx.fragment.app.DialogFragment;
 import java.util.List;
 
 public class SelectAppDialogFragment extends DialogFragment {
-    MainActivity mMainActivity = null;
-
-    SelectAppDialogFragment(MainActivity mainActivity) {
-        mMainActivity = mainActivity;
-    }
+    SelectAppDialogFragment() {}
 
     @NonNull
     @Override
@@ -58,8 +54,9 @@ public class SelectAppDialogFragment extends DialogFragment {
             public void onClick(DialogInterface dialog, int which) {
                 ApplicationInfo appInfo = (ApplicationInfo) adapter.getItem(which);
                 if (appInfo != null) {
-                    Settings.getInstance().launchAppPackageName = appInfo.packageName;
-                    mMainActivity.updateLaunchAppLabel(appInfo.packageName);
+                    Bundle result = new Bundle();
+                    result.putString("packageName", appInfo.packageName);
+                    getParentFragmentManager().setFragmentResult("launchAppSelected", result);
                     dialog.dismiss();
                 }
             }

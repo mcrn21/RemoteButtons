@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:padding="16dp">
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:layout_marginBottom="80dp"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -28,7 +28,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
             <TextView
-                android:id="@+id/current_serial_usb_device_text_view"
+                android:id="@+id/device_text_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -88,8 +88,8 @@
                 android:orientation="horizontal"
                 android:showDividers="middle">
 
-                <Switch
-                    android:id="@+id/launch_app_switch"
+                <TextView
+                    android:id="@+id/launch_app_text_view"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="fill_horizontal|center_vertical"
@@ -151,8 +151,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         app:fabAlignmentMode="end"
-        app:menu="@menu/bottom_app_bar_menu"
-        tools:ignore="BottomAppBar"/>
+        app:menu="@menu/bottom_app_bar_menu" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/add_device_action_button"
@@ -162,4 +161,4 @@
         android:src="@drawable/id_add_link"
         app:layout_anchor="@+id/bottom_app_bar" />
 
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -5,11 +5,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.usb.UsbManager;
 import android.os.IBinder;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+
+import com.google.gson.Gson;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -22,10 +25,8 @@ public class RemoteButtonsService  extends Service {
     public void onCreate() {
         super.onCreate();
 
-        Settings.getInstance().load(this);
-
         initBroadcastReceiver();
-        initSerialUsbDeviceConnection();
+        initDeviceConnection();
     }
 
     @Override
@@ -46,7 +47,6 @@ public class RemoteButtonsService  extends Service {
 
     @Override
     public void onDestroy() {
-        Settings.getInstance().save(this);
         unregisterReceiver(mBroadcastReceiver);
         stopForeground(true);
         mIsRunning = false;
@@ -72,8 +72,7 @@ public class RemoteButtonsService  extends Service {
                 } else if (Common.INTENT_ACTION_USB_DETACHED.equals(intent.getAction())) {
                     mDeviceConnection.disconnect();
                 } else if (Common.INTENT_START_SERIAL.equals(intent.getAction())) {
-                    mDeviceConnection.setDevice(Settings.getInstance().device);
-                    mDeviceConnection.setParams(Settings.getInstance().connectionParams);
+                    updateDeviceConnection();
                     mDeviceConnection.connect();
                 }
             }
@@ -82,7 +81,7 @@ public class RemoteButtonsService  extends Service {
         registerReceiver(mBroadcastReceiver, broadcastReceiverFilter, RECEIVER_EXPORTED);
     }
 
-    private void initSerialUsbDeviceConnection() {
+    private void initDeviceConnection() {
         mDeviceConnection = new DeviceConnection(this);
 
         mDeviceConnection.setOnStateChangedListener(new DeviceConnection.OnStateChangedListener() {
@@ -105,9 +104,21 @@ public class RemoteButtonsService  extends Service {
             }
         });
 
-        mDeviceConnection.setDevice(Settings.getInstance().device);
-        mDeviceConnection.setParams(Settings.getInstance().connectionParams);
+        updateDeviceConnection();
         mDeviceConnection.connect();
+    }
+
+    private void updateDeviceConnection() {
+        SharedPreferences sharedPref = getSharedPreferences(Common.SETTINGS_FILE, Context.MODE_PRIVATE);
+        Device device = new Gson().fromJson(sharedPref.getString("device", ""), Device.class);
+        ConnectionParams params = new ConnectionParams();
+        params.baudRate = Integer.parseInt(sharedPref.getString("baudRate", "9600"));
+        params.dataBits = Integer.parseInt(sharedPref.getString("dataBits", "8"));
+        params.parity = Integer.parseInt(sharedPref.getString("parity", "1"));
+        params.stopBits = Integer.parseInt(sharedPref.getString("stopBits", "1"));
+
+        mDeviceConnection.setDevice(device);
+        mDeviceConnection.setParams(params);
     }
 
     private void sendSerialConnectionUpdated(boolean state) {

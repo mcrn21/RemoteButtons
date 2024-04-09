@@ -20,10 +20,15 @@
     <string name="no_device">no device</string>
     <string name="ok">OK</string>
     <string name="about_message">Author: mcrn21\nDescription: Remote buttons for control media players\nVersion: 24.04\nRepository: <a href="https://github.com/mcrn21/RemoteButtons">github</a></string>
-    <string name="baud_rate_label">Baud Rate:</string>
-    <string name="data_bits_label">Data Bits:</string>
-    <string name="parity_label">Parity:</string>
-    <string name="stop_bits_label">Stop Bits:</string>
+    <string name="connection_parameters_preference">Serial port connection parameters</string>
+    <string name="baud_rate">Baud Rate</string>
+    <string name="baud_rate_descr">Communication speed</string>
+    <string name="data_bits">Data Bits</string>
+    <string name="data_bits_descr">Number of bits to represent one character of data</string>
+    <string name="parity">Parity</string>
+    <string name="parity_descr">Parity bit type</string>
+    <string name="stop_bits">Stop Bits</string>
+    <string name="stop_bits_descr">Pattern of bits that indicates the end of a character</string>
     <string name="save">Save</string>
     <string name="connection_settings">Connection settings</string>
     <string name="select_app">Select app</string>
@@ -31,6 +36,7 @@
     <string name="remove_device">Remove device</string>
     <string name="settings_device">Settings device</string>
     <string name="launch_app">Launch app</string>
+    <string name="launch_app_descr">Launch app by right down button</string>
 
     <string-array name="baud_rate_list">
         <item>300</item>
@@ -64,10 +70,24 @@
         <item>Space</item>
     </string-array>
 
-    <string-array name="stop_bits_list">
+    <string-array name="parity_list_values">
+        <item>0</item>
         <item>1</item>
         <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <string-array name="stop_bits_list">
+        <item>1</item>
         <item>1.5</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="stop_bits_list_values">
+        <item>1</item>
+        <item>3</item>
+        <item>2</item>
     </string-array>
 
 </resources>

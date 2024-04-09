@@ -4,6 +4,7 @@ import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.view.KeyEvent;
 
@@ -52,11 +53,14 @@ public class Commands {
     }
 
     public static void right_down(RemoteButtonsService service) {
-        String packageName = Settings.getInstance().launchAppPackageName;
-        if (!Settings.getInstance().launchAppEnable || packageName.isEmpty())
+        SharedPreferences sharedPref = service.getSharedPreferences(Common.SETTINGS_FILE, Context.MODE_PRIVATE);
+        boolean launchAppEnable = sharedPref.getBoolean("launchAppEnable", false);
+        String launchAppPackageName = sharedPref.getString("launchAppPackageName", "");
+
+        if (!launchAppEnable || launchAppPackageName.isEmpty())
             return;
 
-        Intent intent = service.getPackageManager().getLaunchIntentForPackage(packageName);
+        Intent intent = service.getPackageManager().getLaunchIntentForPackage(launchAppPackageName);
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 service, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         try {
