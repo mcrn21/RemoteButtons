@@ -15,7 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 
 public class RemoteButtonsService  extends Service {
     private boolean mIsRunning = false;
-    private SerialUsbDeviceConnection mSerialUsbDeviceConnection = null;
+    private DeviceConnection mDeviceConnection = null;
     private BroadcastReceiver mBroadcastReceiver;
 
     @Override
@@ -64,17 +64,17 @@ public class RemoteButtonsService  extends Service {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (Common.INTENT_ACTION_GRANT_USB.equals(intent.getAction())) {
-                    mSerialUsbDeviceConnection.setUsbPermission(intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
-                            ? SerialUsbDeviceConnection.UsbPermission.Granted : SerialUsbDeviceConnection.UsbPermission.Denied);
-                    mSerialUsbDeviceConnection.connect();
+                    mDeviceConnection.setUsbPermission(intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
+                            ? DeviceConnection.UsbPermission.Granted : DeviceConnection.UsbPermission.Denied);
+                    mDeviceConnection.connect();
                 } else if (Common.INTENT_ACTION_USB_ATTACHED.equals(intent.getAction())) {
-                    mSerialUsbDeviceConnection.connect();
+                    mDeviceConnection.connect();
                 } else if (Common.INTENT_ACTION_USB_DETACHED.equals(intent.getAction())) {
-                    mSerialUsbDeviceConnection.disconnect();
+                    mDeviceConnection.disconnect();
                 } else if (Common.INTENT_START_SERIAL.equals(intent.getAction())) {
-                    mSerialUsbDeviceConnection.setDeviceInfo(Settings.getInstance().deviceInfo);
-                    mSerialUsbDeviceConnection.setParams(Settings.getInstance().connectionParams);
-                    mSerialUsbDeviceConnection.connect();
+                    mDeviceConnection.setDevice(Settings.getInstance().device);
+                    mDeviceConnection.setParams(Settings.getInstance().connectionParams);
+                    mDeviceConnection.connect();
                 }
             }
         };
@@ -83,9 +83,9 @@ public class RemoteButtonsService  extends Service {
     }
 
     private void initSerialUsbDeviceConnection() {
-        mSerialUsbDeviceConnection = new SerialUsbDeviceConnection(this);
+        mDeviceConnection = new DeviceConnection(this);
 
-        mSerialUsbDeviceConnection.setOnStateChangedListener(new SerialUsbDeviceConnection.OnStateChangedListener() {
+        mDeviceConnection.setOnStateChangedListener(new DeviceConnection.OnStateChangedListener() {
             @Override
             public void onChanged(boolean state, CharSequence text) {
                 Toast.makeText(RemoteButtonsService.this, text, Toast.LENGTH_SHORT).show();
@@ -93,7 +93,7 @@ public class RemoteButtonsService  extends Service {
             }
         });
 
-        mSerialUsbDeviceConnection.setOnCommandListener(new SerialUsbDeviceConnection.OnCommandListener() {
+        mDeviceConnection.setOnCommandListener(new DeviceConnection.OnCommandListener() {
             @Override
             public void onCommand(String command) {
                 sendRemoteButtonsCommand(command);
@@ -105,9 +105,9 @@ public class RemoteButtonsService  extends Service {
             }
         });
 
-        mSerialUsbDeviceConnection.setDeviceInfo(Settings.getInstance().deviceInfo);
-        mSerialUsbDeviceConnection.setParams(Settings.getInstance().connectionParams);
-        mSerialUsbDeviceConnection.connect();
+        mDeviceConnection.setDevice(Settings.getInstance().device);
+        mDeviceConnection.setParams(Settings.getInstance().connectionParams);
+        mDeviceConnection.connect();
     }
 
     private void sendSerialConnectionUpdated(boolean state) {

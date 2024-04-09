@@ -6,8 +6,8 @@ import android.content.SharedPreferences;
 import com.google.gson.Gson;
 
 public class Settings {
-    public SerialUsbDevice.Info deviceInfo = new SerialUsbDevice.Info();
-    public SerialUsbDeviceConnection.Params connectionParams = new SerialUsbDeviceConnection.Params();
+    public Device device = new Device();
+    public ConnectionParams connectionParams = new ConnectionParams();
     public String launchAppPackageName = "";
     public boolean launchAppEnable = false;
 
@@ -25,13 +25,13 @@ public class Settings {
     public void load(Context context) {
         SharedPreferences sharedPref = context.getSharedPreferences(Common.SETTINGS_FILE, Context.MODE_PRIVATE);
 
-        String deviceInfoJson = sharedPref.getString("deviceInfo", "");
-        if (!deviceInfoJson.isEmpty())
-            deviceInfo = new Gson().fromJson(deviceInfoJson, SerialUsbDevice.Info.class);
+        String deviceJson = sharedPref.getString("device", "");
+        if (!deviceJson.isEmpty())
+            device = new Gson().fromJson(deviceJson, Device.class);
 
         String connectionParamsJson = sharedPref.getString("connectionParams", "");
         if (!connectionParamsJson.isEmpty())
-            connectionParams = new Gson().fromJson(connectionParamsJson, SerialUsbDeviceConnection.Params.class);
+            connectionParams = new Gson().fromJson(connectionParamsJson, ConnectionParams.class);
 
         launchAppPackageName = sharedPref.getString("launchAppPackageName", "");
         launchAppEnable = sharedPref.getBoolean("launchAppEnable", false);
@@ -41,7 +41,7 @@ public class Settings {
         SharedPreferences sharedPref = context.getSharedPreferences(Common.SETTINGS_FILE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
 
-        editor.putString("deviceInfo", new Gson().toJson(deviceInfo));
+        editor.putString("device", new Gson().toJson(device));
         editor.putString("connectionParams", new Gson().toJson(connectionParams));
         editor.putString("launchAppPackageName", launchAppPackageName);
         editor.putBoolean("launchAppEnable", launchAppEnable);

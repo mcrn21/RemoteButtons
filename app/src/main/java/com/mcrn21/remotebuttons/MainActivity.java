@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
         Intent serviceIntent = new Intent(this, RemoteButtonsService.class);
         startForegroundService(serviceIntent);
 
-        updateCurrentSerialUsbDeviceLabel(Settings.getInstance().deviceInfo);
+        updateCurrentSerialUsbDeviceLabel(Settings.getInstance().device);
         updateLaunchAppLabel(Settings.getInstance().launchAppPackageName);
     }
 
@@ -99,8 +99,8 @@ public class MainActivity extends AppCompatActivity {
         addDeviceActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new SelectSerialUsbDeviceDialogFragment(MainActivity.this).show(
-                        getSupportFragmentManager(), SelectSerialUsbDeviceDialogFragment.TAG);
+                new SelectDeviceDialogFragment(MainActivity.this).show(
+                        getSupportFragmentManager(), SelectDeviceDialogFragment.TAG);
             }
         });
 
@@ -110,13 +110,19 @@ public class MainActivity extends AppCompatActivity {
             public boolean onMenuItemClick(MenuItem item) {
                 int id = item.getItemId();
                 if (id == R.id.remove_device_item) {
-                    Settings.getInstance().deviceInfo = new SerialUsbDevice.Info();
-                    updateCurrentSerialUsbDeviceLabel(Settings.getInstance().deviceInfo);
+                    Settings.getInstance().device.reset();
+                    updateCurrentSerialUsbDeviceLabel(Settings.getInstance().device);
                     sendStartSerial();
                     return true;
                 } else if (id == R.id.settings_device_item) {
-                    new SettingsSerialUsbDeviceDialogFragment(MainActivity.this).show(
-                            getSupportFragmentManager(), SettingsSerialUsbDeviceDialogFragment.TAG);
+//                    new SettingsSerialUsbDeviceDialogFragment(MainActivity.this).show(
+//                            getSupportFragmentManager(), SettingsSerialUsbDeviceDialogFragment.TAG);
+
+//                    getSupportFragmentManager()
+//                            .beginTransaction()
+//                            .replace(R.id.settings_container, new PreferenceFragment())
+//                            .commit();
+
                     return true;
                 }
 
@@ -160,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (Common.INTENT_SERIAL_CONNECTION_UPDATED.equals(intent.getAction())) {
-                    updateCurrentSerialUsbDeviceLabel(Settings.getInstance().deviceInfo);
+                    updateCurrentSerialUsbDeviceLabel(Settings.getInstance().device);
                 } else if (Common.INTENT_REMOTE_BUTTONS_COMMAND.equals(intent.getAction())) {
                     String command = intent.getStringExtra("command");
 
@@ -184,16 +190,15 @@ public class MainActivity extends AppCompatActivity {
         sendBroadcast(intent);
     }
 
-    public void updateCurrentSerialUsbDeviceLabel(SerialUsbDevice.Info info) {
+    public void updateCurrentSerialUsbDeviceLabel(Device device) {
         TextView currentSerialUsbDeviceTextView = (TextView) findViewById(R.id.current_serial_usb_device_text_view);
-        SerialUsbDevice serialUsbDevice = SerialUsbDevice.getSerialUsbDevice(info, this);
 
-        if (serialUsbDevice == null) {
+        if (!device.isValid()) {
             currentSerialUsbDeviceTextView.setText(R.string.no_device);
             return;
         }
 
-        String str = serialUsbDevice.toString();
+        String str = device.description;
         SpannableString spStr = new SpannableString(str);
         spStr.setSpan(new StyleSpan(Typeface.BOLD), 0, str.indexOf("\n"), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         currentSerialUsbDeviceTextView.setText(spStr);

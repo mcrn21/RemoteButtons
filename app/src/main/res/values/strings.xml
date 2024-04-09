@@ -12,6 +12,7 @@
     <string name="open_connection_permissions_denied">Connection to remote buttons device failed: permission denied</string>
     <string name="open_connection_failed">Connection to remote buttons device failed: open failed</string>
     <string name="unsupported_serial_port_parameters">Unsupported parameters for serial port</string>
+    <string name="not_enough_ports_at_device">Connection to remote buttons device failed: not enough ports at device</string>
     <string name="successful_connect">Successful connected to the remote buttons device</string>
     <string name="disconnect">Disconnect from the remote buttons device</string>
     <string name="failed_connect">Connection to remote buttons device failed: </string>

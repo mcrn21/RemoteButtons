@@ -40,4 +40,5 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation("com.github.mik3y:usb-serial-for-android:3.7.0")
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation("androidx.preference:preference-ktx:1.2.1")
 }

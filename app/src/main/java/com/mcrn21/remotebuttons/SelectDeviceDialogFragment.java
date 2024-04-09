@@ -18,10 +18,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
-public class SelectSerialUsbDeviceDialogFragment extends DialogFragment {
+public class SelectDeviceDialogFragment extends DialogFragment {
     MainActivity mMainActivity = null;
 
-    SelectSerialUsbDeviceDialogFragment(MainActivity mainActivity) {
+    SelectDeviceDialogFragment(MainActivity mainActivity) {
         mMainActivity = mainActivity;
     }
 
@@ -31,14 +31,15 @@ public class SelectSerialUsbDeviceDialogFragment extends DialogFragment {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(requireContext());
         dialogBuilder.setTitle(R.string.select_device_label);
 
-        ArrayAdapter<SerialUsbDevice> adapter = new ArrayAdapter(requireContext(), 0, SerialUsbDevice.getSerialUsbDevices(requireContext())) {
+        ArrayAdapter<Device> adapter = new ArrayAdapter(requireContext(), 0, Device.getDevices(requireContext())) {
             @NonNull
             public View getView(int position, @Nullable View view, @NonNull ViewGroup parent) {
                 if(view == null)
-                    view = LayoutInflater.from(requireContext()).inflate(R.layout.item_serial_usb_device,parent,false);
+                    view = LayoutInflater.from(requireContext()).inflate(R.layout.item_device,parent,false);
 
-                SerialUsbDevice serialUsbDevice = (SerialUsbDevice) getItem(position);
-                String str = serialUsbDevice.toString();
+                Device device = (Device) getItem(position);
+                assert device != null;
+                String str = device.description;
                 SpannableString spStr = new SpannableString(str);
                 spStr.setSpan(new StyleSpan(Typeface.BOLD), 0, str.indexOf("\n"), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
@@ -52,11 +53,10 @@ public class SelectSerialUsbDeviceDialogFragment extends DialogFragment {
         dialogBuilder.setAdapter(adapter, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                SerialUsbDevice serialUsbDevice = (SerialUsbDevice) adapter.getItem(which);
-                if (serialUsbDevice != null) {
-                    SerialUsbDevice.Info deviceInfo = serialUsbDevice.getInfo();
-                    Settings.getInstance().deviceInfo = deviceInfo;
-                    mMainActivity.updateCurrentSerialUsbDeviceLabel(deviceInfo);
+                Device device = (Device) adapter.getItem(which);
+                if (device != null) {
+                    Settings.getInstance().device = device;
+                    mMainActivity.updateCurrentSerialUsbDeviceLabel(device);
                     mMainActivity.sendStartSerial();
                 }
                 dialog.dismiss();

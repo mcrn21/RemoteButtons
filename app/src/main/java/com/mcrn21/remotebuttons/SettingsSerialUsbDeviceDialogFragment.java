@@ -31,7 +31,7 @@ public class SettingsSerialUsbDeviceDialogFragment extends DialogFragment {
         View view = getLayoutInflater().inflate(R.layout.dialog_connection_settings, null);
         dialogBuilder.setView(view);
 
-        SerialUsbDeviceConnection.Params params = Settings.getInstance().connectionParams;
+        ConnectionParams params = Settings.getInstance().connectionParams;
 
         // Baud rate
         List<String> baudRateList = Arrays.asList(getResources().getStringArray(R.array.baud_rate_list));
@@ -70,7 +70,7 @@ public class SettingsSerialUsbDeviceDialogFragment extends DialogFragment {
         dialogBuilder.setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                SerialUsbDeviceConnection.Params params = new SerialUsbDeviceConnection.Params();
+                ConnectionParams params = new ConnectionParams();
                 params.baudRate = Integer.parseInt(baudRateTextView.getText().toString());
                 params.dataBits = Integer.parseInt(dataBitsTextView.getText().toString());
                 params.parity = parityList.indexOf(parityTextView.getText().toString());

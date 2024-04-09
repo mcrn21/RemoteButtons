@@ -3,41 +3,28 @@ package com.mcrn21.remotebuttons;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
-import android.os.Build;
-import android.widget.Toast;
 
+import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
+import com.hoho.android.usbserial.driver.UsbSerialProber;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
-public class SerialUsbDeviceConnection  implements SerialInputOutputManager.Listener {
+public class DeviceConnection implements SerialInputOutputManager.Listener {
     public interface OnStateChangedListener {
         void onChanged(boolean state, CharSequence text);
     }
     public interface OnCommandListener {
         void onCommand(String command);
     }
-    static public class Params {
-        public Params() {}
-        public Params(int baudRate, int dataBits, int parity, int stopBits) {
-            this.baudRate = baudRate;
-            this.dataBits = dataBits;
-            this.parity = parity;
-            this.stopBits = stopBits;
-        }
-        public int baudRate = 9600;
-        public int dataBits = 8;
-        public int parity = 0;
-        public int stopBits = 1;
-    }
     public enum UsbPermission { Unknown, Requested, Granted, Denied }
     private Context mContext = null;
-    private SerialUsbDevice.Info mDeviceInfo = null;
-    private Params mParams = new Params();
+    private Device mDevice = new Device();
+    private ConnectionParams mParams = new ConnectionParams();
     private UsbPermission mUsbPermission = UsbPermission.Unknown;
     private SerialInputOutputManager mUsbIoManager = null;
     private UsbSerialPort mUsbSerialPort = null;
@@ -45,23 +32,23 @@ public class SerialUsbDeviceConnection  implements SerialInputOutputManager.List
     private OnStateChangedListener mOnStateChangedListener = null;
     private OnCommandListener mOnCommandListener = null;
 
-    SerialUsbDeviceConnection(Context context) {
+    DeviceConnection(Context context) {
         mContext = context;
     }
 
-    public SerialUsbDevice.Info getDeviceInfo() {
-        return mDeviceInfo;
+    public Device getDevice() {
+        return mDevice;
     }
 
-    public void setDeviceInfo(SerialUsbDevice.Info deviceInfo) {
-        mDeviceInfo = deviceInfo;
+    public void setDevice(Device device) {
+        mDevice = device;
     }
 
-    public Params getParams() {
+    public ConnectionParams getParams() {
         return mParams;
     }
 
-    public void setParams(Params params) {
+    public void setParams(ConnectionParams params) {
         mParams = params;
     }
 
@@ -79,32 +66,43 @@ public class SerialUsbDeviceConnection  implements SerialInputOutputManager.List
 
         disconnect();
 
-        SerialUsbDevice serialUsbDevice = SerialUsbDevice.getSerialUsbDevice(mDeviceInfo, mContext);
+        UsbDevice usbDevice = null;
+        UsbManager usbManager = (UsbManager) mContext.getSystemService(Context.USB_SERVICE);
 
-        if (serialUsbDevice == null)
+        for(UsbDevice v : usbManager.getDeviceList().values()) {
+            if (v.getVendorId() == mDevice.vendorId && v.getProductId() == mDevice.productId)
+                usbDevice = v;
+        }
+
+        if (usbDevice == null)
             return;
 
-        if (serialUsbDevice.getDriver() == null) {
+        UsbSerialDriver driver = UsbSerialProber.getDefaultProber().probeDevice(usbDevice);
+        if (driver == null) {
             stateChanged(false, mContext.getText(R.string.driver_not_found));
             return;
         }
 
-        UsbManager usbManager = (UsbManager) mContext.getSystemService(Context.USB_SERVICE);
-        mUsbSerialPort = serialUsbDevice.getDriver().getPorts().get(serialUsbDevice.getPort());
-        UsbDeviceConnection usbConnection = usbManager.openDevice(serialUsbDevice.getDevice());
+        if(driver.getPorts().size() < mDevice.port) {
+            stateChanged(false, mContext.getText(R.string.not_enough_ports_at_device));
+            return;
+        }
 
-        if(usbConnection == null && mUsbPermission == UsbPermission.Unknown && !usbManager.hasPermission(serialUsbDevice.getDevice())) {
+        mUsbSerialPort = driver.getPorts().get(mDevice.port);
+        UsbDeviceConnection usbConnection = usbManager.openDevice(driver.getDevice());
+
+        if(usbConnection == null && mUsbPermission == UsbPermission.Unknown && !usbManager.hasPermission(driver.getDevice())) {
             mUsbPermission = UsbPermission.Requested;
             int flags = PendingIntent.FLAG_MUTABLE;
             Intent intent = new Intent(Common.INTENT_ACTION_GRANT_USB);
             intent.setPackage(mContext.getPackageName());
             PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(mContext, 0, intent, flags);
-            usbManager.requestPermission(serialUsbDevice.getDevice(), usbPermissionIntent);
+            usbManager.requestPermission(driver.getDevice(), usbPermissionIntent);
             return;
         }
 
         if(usbConnection == null) {
-            stateChanged(false, !usbManager.hasPermission(serialUsbDevice.getDevice()) ?
+            stateChanged(false, !usbManager.hasPermission(driver.getDevice()) ?
                     mContext.getText(R.string.open_connection_permissions_denied) : mContext.getText(R.string.open_connection_failed));
             return;
         }
