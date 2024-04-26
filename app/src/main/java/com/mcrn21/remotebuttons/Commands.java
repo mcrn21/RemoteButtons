@@ -23,6 +23,7 @@ public class Commands {
 
     public static void enter(RemoteButtonsService service) {
         AudioManager audio = (AudioManager) service.getSystemService(Context.AUDIO_SERVICE);
+        //  KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
         if (audio.isMusicActive()) {
             KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE);
             audio.dispatchMediaKeyEvent(event);
